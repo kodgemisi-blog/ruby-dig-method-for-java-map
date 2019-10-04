@@ -1,0 +1,59 @@
+:toc: left
+:icons: font
+:nofooter:
+:source-highlighter: coderay
+:docinfo: shared,private
+
+= <Blog post title>
+<Writer Name, don't put new line between this and the title>
+
+.Please read following instructions before writing a blog post
+****
+
+.Use this repository as a template
+image::https://i.ibb.co/kyy4PQN/image.png[]
+
+.Create new repository in `kodgemisi-blog` Github organization
+image::https://i.ibb.co/r3BtLBc/image.png[]
+
+* Choose a descriptive and meaningful `repository name`.
+  ** The same name must be used as your `package name` and `maven artifact name`.
+* Change `com.kodgemisi.blog.demo` package to `com.kodgemisi.blog.<yourpackage>`.
+  ** Make sure your package starts with `com.kodgemisi.blog`.
+* Clone the new repo in your local file system and import the repository into your IDE.
+* Edit `pom.xml` file.
+  ** Edit all `TODO`s accordingly.
+  ** Change all `change-this` fields.
+* Don't add a configuration file other than `application.yml` unless it's specifically required by your blog post subject.
+  ** Use `dev` profile unless it's specifically required otherwise by your blog post subject.
+* Change everything in form of `<some text>` with your values.
+* Put all images and videos under images folder. Use them as follows: `image::images/some.gif[]`
+* You need to run `mvn clean compile` in order the blog post to be generated. It will be generated to `docs/index.html` file.
+* Remember that this blog post's default license is public domain.
+* *Remove this block*.
+
+.ASCIIDOCTOR related instructions
+
+* You can use https://asciidoctor.org/docs/asciidoc-syntax-quick-reference/[asciidoc syntax quick reference] to quickly learn about ASCIIDOC syntax.
+* While working in development, use `mvn asciidoctor:auto-refresh` to auto-generate `docs/index.html` file every time you make changes to `README.adoc`.
+* Idea can serve generated `docs/index.html` file via its own local web server.
+
+.Use IDEA's internal static file server to preview the `docs/index.html` file.
+image::https://i.ibb.co/m0YfMW3/image.png[]
+
+* By default table of contents shows 2 levels. You can edit it via `:toclevels: 4`. See details toc levels https://stackoverflow.com/a/31256911/878361[here].
+* You shouldn't really need it but just in case, if you need to put some css put them in `<style>` tag in `docinfo.html`
+
+****
+
+== Introduction
+
+< *Briefly* explain the goal of this blog post.>
+
+< Put an image or preferably a gif/video to show how the finished work would seem or behave >
+
+== Getting started
+
+< Explain, in details, the steps to prepare the development environment (Database, cache, library configuration etc.) to successfully run the sample code in this repository. >
+
+== <Write your blog post...>
