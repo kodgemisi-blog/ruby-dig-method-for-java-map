@@ -5,8 +5,8 @@
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 1.5.8">
-<meta name="author" content="&lt;Writer Name, don't put new line between this and the title&gt;">
-<title>&lt;Blog post title&gt;</title>
+<meta name="author" content="Destan Sarpkaya">
+<title>Implementing Ruby&#8217;s dig method in Java: A safe navigation for HashMap</title>
 <style>
 /*https://docs.spring.io/spring/docs/5.0.x/spring-framework-reference/stylesheets/asciidoctor-spring.css*/
 @import url(https://fonts.googleapis.com/css?family=Varela+Round|Montserrat:400,700);
@@ -855,161 +855,229 @@ table.CodeRay td.code>pre{padding:0}
 </head>
 <body class="article toc2 toc-left">
 <div id="header">
-<h1>&lt;Blog post title&gt;</h1>
+<h1>Implementing Ruby&#8217;s dig method in Java: A safe navigation for HashMap</h1>
 <div class="details">
-<span id="author" class="author">&lt;Writer Name, don't put new line between this and the title&gt;</span><br>
-<span id="revdate">2019-10-04</span>
+<span id="author" class="author">Destan Sarpkaya</span><br>
+<span id="revdate">2019-10-05</span>
 <br><span id="revremark">Kod Gemisi</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
 <li><a href="#_introduction">Introduction</a></li>
-<li><a href="#_getting_started">Getting started</a></li>
-<li><a href="#_write_your_blog_post">&lt;Write your blog post&#8230;&#8203;&gt;</a></li>
+<li><a href="#_rubys_dig_method_in_java">Ruby&#8217;s <code>dig</code> method in Java</a></li>
+<li><a href="#_trying_the_null_safe_navigation_for_java_hashmap">Trying the null safe navigation for Java HashMap</a>
+<ul class="sectlevel2">
+<li><a href="#_seeing_the_original_behavior">Seeing the original behavior</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
 <div id="content">
-<div id="preamble">
-<div class="sectionbody">
-<div class="sidebarblock">
-<div class="content">
-<div class="title">Please read following instructions before writing a blog post</div>
-<div class="imageblock">
-<div class="content">
-<img src="https://i.ibb.co/kyy4PQN/image.png" alt="image">
-</div>
-<div class="title">Figure 1. Use this repository as a template</div>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="https://i.ibb.co/r3BtLBc/image.png" alt="image">
-</div>
-<div class="title">Figure 2. Create new repository in <code>kodgemisi-blog</code> Github organization</div>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Choose a descriptive and meaningful <code>repository name</code>.</p>
-<div class="ulist">
-<ul>
-<li>
-<p>The same name must be used as your <code>package name</code> and <code>maven artifact name</code>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Change <code>com.kodgemisi.blog.demo</code> package to <code>com.kodgemisi.blog.&lt;yourpackage&gt;</code>.</p>
-<div class="ulist">
-<ul>
-<li>
-<p>Make sure your package starts with <code>com.kodgemisi.blog</code>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Clone the new repo in your local file system and import the repository into your IDE.</p>
-</li>
-<li>
-<p>Edit <code>pom.xml</code> file.</p>
-<div class="ulist">
-<ul>
-<li>
-<p>Edit all `TODO`s accordingly.</p>
-</li>
-<li>
-<p>Change all <code>change-this</code> fields.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Don&#8217;t add a configuration file other than <code>application.yml</code> unless it&#8217;s specifically required by your blog post subject.</p>
-<div class="ulist">
-<ul>
-<li>
-<p>Use <code>dev</code> profile unless it&#8217;s specifically required otherwise by your blog post subject.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Change everything in form of <code>&lt;some text&gt;</code> with your values.</p>
-</li>
-<li>
-<p>Put all images and videos under images folder. Use them as follows: <code>image::images/some.gif[]</code></p>
-</li>
-<li>
-<p>You need to run <code>mvn clean compile</code> in order the blog post to be generated. It will be generated to <code>docs/index.html</code> file.</p>
-</li>
-<li>
-<p>Remember that this blog post&#8217;s default license is public domain.</p>
-</li>
-<li>
-<p><strong>Remove this block</strong>.</p>
-</li>
-</ul>
-</div>
-<div class="ulist">
-<div class="title">ASCIIDOCTOR related instructions</div>
-<ul>
-<li>
-<p>You can use <a href="https://asciidoctor.org/docs/asciidoc-syntax-quick-reference/">asciidoc syntax quick reference</a> to quickly learn about ASCIIDOC syntax.</p>
-</li>
-<li>
-<p>While working in development, use <code>mvn asciidoctor:auto-refresh</code> to auto-generate <code>docs/index.html</code> file every time you make changes to <code>README.adoc</code>.</p>
-</li>
-<li>
-<p>Idea can serve generated <code>docs/index.html</code> file via its own local web server.</p>
-</li>
-</ul>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="https://i.ibb.co/m0YfMW3/image.png" alt="image">
-</div>
-<div class="title">Figure 3. Use IDEA&#8217;s internal static file server to preview the <code>docs/index.html</code> file.</div>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>By default table of contents shows 2 levels. You can edit it via <code>:toclevels: 4</code>. See details toc levels <a href="https://stackoverflow.com/a/31256911/878361">here</a>.</p>
-</li>
-<li>
-<p>You shouldn&#8217;t really need it but just in case, if you need to put some css put them in <code>&lt;style&gt;</code> tag in <code>docinfo.html</code></p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-</div>
-</div>
 <div class="sect1">
 <h2 id="_introduction">Introduction</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>&lt; <strong>Briefly</strong> explain the goal of this blog post.&gt;</p>
+<p>Suppose we have a JSON file like below and we want to convert to into a map (a hash in Ruby terminology.)</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="json">{
+  <span class="key"><span class="delimiter">&quot;</span><span class="content">first</span><span class="delimiter">&quot;</span></span>: {
+    <span class="key"><span class="delimiter">&quot;</span><span class="content">second</span><span class="delimiter">&quot;</span></span>: {
+      <span class="key"><span class="delimiter">&quot;</span><span class="content">third</span><span class="delimiter">&quot;</span></span>: <span class="integer">1881</span>
+    }
+  }
+}</code></pre>
+</div>
 </div>
 <div class="paragraph">
-<p>&lt; Put an image or preferably a gif/video to show how the finished work would seem or behave &gt;</p>
+<p>Ruby has a <a href="https://ruby-doc.org/core-2.6.5/Hash.html#method-i-dig">dig() method</a> which provides a <em>null-safe</em> way to go deep in a nested map and Groovy has a <a href="https://groovy-lang.org/operators.html#_safe_navigation_operator">safe navigation</a> syntax to do the same.</p>
+</div>
+<div class="paragraph">
+<p>Below 2 examples would return the value <code>1881</code></p>
+</div>
+<div class="listingblock">
+<div class="title">Ruby usage</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="ruby">map.dig(<span class="string"><span class="delimiter">'</span><span class="content">first</span><span class="delimiter">'</span></span>, <span class="string"><span class="delimiter">'</span><span class="content">second</span><span class="delimiter">'</span></span>, <span class="string"><span class="delimiter">'</span><span class="content">third</span><span class="delimiter">'</span></span>) <span class="comment"># returns 1881</span>
+map.dig(<span class="string"><span class="delimiter">'</span><span class="content">first</span><span class="delimiter">'</span></span>, <span class="string"><span class="delimiter">'</span><span class="content">X</span><span class="delimiter">'</span></span>, <span class="string"><span class="delimiter">'</span><span class="content">third</span><span class="delimiter">'</span></span>) <span class="comment"># returns &quot;&quot;</span></code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Groovy usage</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="groovy">map.get(<span class="string"><span class="delimiter">'</span><span class="content">first</span><span class="delimiter">'</span></span>)?.get(<span class="string"><span class="delimiter">'</span><span class="content">second</span><span class="delimiter">'</span></span>)?.get(<span class="string"><span class="delimiter">'</span><span class="content">third</span><span class="delimiter">'</span></span>) <span class="comment">// returns 1881</span>
+map.get(<span class="string"><span class="delimiter">'</span><span class="content">first</span><span class="delimiter">'</span></span>)?.get(<span class="string"><span class="delimiter">'</span><span class="content">X</span><span class="delimiter">'</span></span>)?.get(<span class="string"><span class="delimiter">'</span><span class="content">third</span><span class="delimiter">'</span></span>) <span class="comment">// returns &quot;null&quot;</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Unfortunately, Java doesn&#8217;t provide similar syntax. We would write something like below in Java:</p>
+</div>
+<div class="listingblock">
+<div class="title">Java 7 and below</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="java"><span class="comment">// it's just too verbose, let's skip it...</span></code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Java 8+</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="java">var em = <span class="predefined-type">Collections</span>.emptyMap();
+map.getOrDefault(<span class="string"><span class="delimiter">&quot;</span><span class="content">first</span><span class="delimiter">&quot;</span></span>, em).getOrDefault(<span class="string"><span class="delimiter">&quot;</span><span class="content">second</span><span class="delimiter">&quot;</span></span>, em).getOrDefault(<span class="string"><span class="delimiter">&quot;</span><span class="content">third</span><span class="delimiter">&quot;</span></span>, em)</code></pre>
+</div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_getting_started">Getting started</h2>
+<h2 id="_rubys_dig_method_in_java">Ruby&#8217;s <code>dig</code> method in Java</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>&lt; Explain, in details, the steps to prepare the development environment (Database, cache, library configuration etc.) to successfully run the sample code in this repository. &gt;</p>
+<p>We will implement an equivalent of Ruby&#8217;s dig method in Java which will be used as follows:</p>
+</div>
+<div class="listingblock">
+<div class="title">Java usage</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="java">dig(map, <span class="string"><span class="delimiter">&quot;</span><span class="content">first</span><span class="delimiter">&quot;</span></span>, <span class="string"><span class="delimiter">&quot;</span><span class="content">second</span><span class="delimiter">&quot;</span></span>, <span class="string"><span class="delimiter">&quot;</span><span class="content">third</span><span class="delimiter">&quot;</span></span>)) <span class="comment">// retuns Optional[1881]</span>
+dig(map, <span class="string"><span class="delimiter">&quot;</span><span class="content">first</span><span class="delimiter">&quot;</span></span>, <span class="string"><span class="delimiter">&quot;</span><span class="content">X</span><span class="delimiter">&quot;</span></span>, <span class="string"><span class="delimiter">&quot;</span><span class="content">third</span><span class="delimiter">&quot;</span></span>)) <span class="comment">// returns Optional.empty</span></code></pre>
 </div>
 </div>
-</div>
-<div class="sect1">
-<h2 id="_write_your_blog_post">&lt;Write your blog post&#8230;&#8203;&gt;</h2>
-<div class="sectionbody">
+<div class="listingblock">
+<div class="title">Implementing the <code>dig</code> method in Java</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="java"><span class="type">class</span> <span class="class">MapUtils</span> { <i class="conum" data-value="1"></i><b>(1)</b>
 
+    <span class="directive">public</span> <span class="directive">static</span> &lt;R&gt; Optional&lt;R&gt; dig(<span class="predefined-type">Map</span>&lt;<span class="predefined-type">String</span>, ?&gt; map, <span class="predefined-type">String</span>... keys) { <i class="conum" data-value="2"></i><b>(2)</b>
+
+        <span class="keyword">if</span> (map == <span class="predefined-constant">null</span>) {
+            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="exception">IllegalArgumentException</span>(<span class="string"><span class="delimiter">&quot;</span><span class="content">'map' cannot be null!</span><span class="delimiter">&quot;</span></span>);
+        }
+
+        <span class="keyword">if</span> (keys == <span class="predefined-constant">null</span> || keys.length == <span class="integer">0</span>) {
+            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="exception">IllegalArgumentException</span>(<span class="string"><span class="delimiter">&quot;</span><span class="content">You should provide at least one key!</span><span class="delimiter">&quot;</span></span>);
+        }
+
+        <span class="predefined-type">Map</span>&lt;<span class="predefined-type">String</span>, ?&gt; currentMap = map;
+
+        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="integer">0</span>; i &lt; keys.length; ++i) {
+            <span class="directive">final</span> <span class="predefined-type">String</span> key = keys[i];
+            <span class="directive">final</span> <span class="predefined-type">Object</span> value = currentMap.get(key);
+            <span class="keyword">if</span> (value <span class="keyword">instanceof</span> <span class="predefined-type">Map</span>) { <i class="conum" data-value="3"></i><b>(3)</b>
+                currentMap = (<span class="predefined-type">Map</span>&lt;<span class="predefined-type">String</span>, ?&gt;) value; <i class="conum" data-value="4"></i><b>(4)</b>
+            }
+            <span class="keyword">else</span> {
+                <span class="keyword">if</span> (i == keys.length - <span class="integer">1</span>) { <i class="conum" data-value="5"></i><b>(5)</b>
+                    <span class="directive">final</span> R retVal = (R) value; <i class="conum" data-value="6"></i><b>(6)</b>
+                    <span class="keyword">return</span> Optional.ofNullable(retVal);
+                }
+                <span class="keyword">return</span> Optional.empty();
+            }
+        }
+
+        <span class="keyword">return</span> Optional.empty();
+    }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>You can put this method into any class and it has not to be a static method. This is just for convention.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td><code>&lt;R&gt;</code> is a generic type. <code>dig</code> method has a parameterized return type so that developers can use it without casting.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>No need for extra null checking because <code>instanceof</code> would return <code>false</code> for `null`s.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>We need to assume that the <code>value</code> (the next object in the map) is of type <code>Map&lt;String, ?&gt;</code>. This is a safe assumption for us because if the <code>key</code> of the new map is not a string or the value of it is not a <code>Map</code> we won&#8217;t have an error in next loop and simply return <code>Optional.empty()</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td>If the <code>value</code> is not a <code>Map</code> and we have just used the last <code>key</code> then it means that we have got the final value.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="6"></i><b>6</b></td>
+<td>We need to cast the return value. Here, the type safety is gone and successful execution is dependent on the developer&#8217;s correct assumption of the result type.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Remember the <code>sample.json</code> the last value is an integer <code>1881</code> not a string <code>"1881"</code>. Hence:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="java">Optional&lt;<span class="predefined-type">String</span>&gt; result = dig(map, <span class="string"><span class="delimiter">&quot;</span><span class="content">first</span><span class="delimiter">&quot;</span></span>, <span class="string"><span class="delimiter">&quot;</span><span class="content">second</span><span class="delimiter">&quot;</span></span>, <span class="string"><span class="delimiter">&quot;</span><span class="content">third</span><span class="delimiter">&quot;</span></span>);
+<span class="predefined-type">String</span> year = result.get();
+<span class="comment">// Exception: java.lang.ClassCastException: class java.lang.Integer cannot be cast to class java.lang.String</span>
+
+<span class="comment">// Correct usage should be:</span>
+Optional&lt;<span class="predefined-type">Integer</span>&gt; result = dig(map, <span class="string"><span class="delimiter">&quot;</span><span class="content">first</span><span class="delimiter">&quot;</span></span>, <span class="string"><span class="delimiter">&quot;</span><span class="content">second</span><span class="delimiter">&quot;</span></span>, <span class="string"><span class="delimiter">&quot;</span><span class="content">third</span><span class="delimiter">&quot;</span></span>);
+<span class="predefined-type">Integer</span> year = result.get();</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_trying_the_null_safe_navigation_for_java_hashmap">Trying the null safe navigation for Java HashMap</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Clone the and import the project into your IDE</p>
+</li>
+<li>
+<p>Run <code>DigMethodShowCase</code> class</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Or execute in command line</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Build the project with <code>mvn clean package</code> command</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Run this command in project&#8217;s root (where the <code>pom.xml</code> resides)</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Execute it via:</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p><code>java -jar target/ruby-dig-method-for-java-map-0.0.1-SNAPSHOT-jar-with-dependencies.jar</code></p>
+</div>
+<div class="sect2">
+<h3 id="_seeing_the_original_behavior">Seeing the original behavior</h3>
+<div class="paragraph">
+<p>There is also a Ruby file to demonstrate the original <code>dig</code> method in <code>src/main/resources/sample.rb</code></p>
+</div>
+<div class="paragraph">
+<p>If you have Ruby installed you can run the file via</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="bash">$ cd src/main/resources
+$ ruby sample.rb</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>It will parse <code>sample.json</code> into a map (Ruby folks call it hash) and use <code>dig</code> on it.</p>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -1019,8 +1087,8 @@ table.CodeRay td.code>pre{padding:0}
     <div id="disqus_thread"></div>
     <script>
         var disqus_config = function () {
-            this.page.url = "https://kodgemisi-blog.github.io/change-this/";
-            this.page.identifier = "change-this";
+            this.page.url = "https://kodgemisi-blog.github.io/ruby-dig-method-for-java-map/";
+            this.page.identifier = "ruby-dig-method-for-java-map";
         };
 
         (function() { // DON'T EDIT BELOW THIS LINE
@@ -1038,7 +1106,7 @@ table.CodeRay td.code>pre{padding:0}
         <img src="images/kodgemisi-logo.png" style="filter: brightness(0) invert(1);width: 200px;">
     </a>
     <div id="footer-text">
-        <a id="scmUrl" href="https://github.com/kodgemisi-blog/change-this">Source code of the app in this post</a> <br>
+        <a id="scmUrl" href="https://github.com/kodgemisi-blog/ruby-dig-method-for-java-map">Source code of the app in this post</a> <br>
         <a href="https://blog.kodgemisi.com/">Kod Gemisi Blog</a>
     </div>
 </div>

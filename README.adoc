@@ -4,56 +4,139 @@
 :source-highlighter: coderay
 :docinfo: shared,private
 
-= <Blog post title>
-<Writer Name, don't put new line between this and the title>
-
-.Please read following instructions before writing a blog post
-****
-
-.Use this repository as a template
-image::https://i.ibb.co/kyy4PQN/image.png[]
-
-.Create new repository in `kodgemisi-blog` Github organization
-image::https://i.ibb.co/r3BtLBc/image.png[]
-
-* Choose a descriptive and meaningful `repository name`.
-  ** The same name must be used as your `package name` and `maven artifact name`.
-* Change `com.kodgemisi.blog.demo` package to `com.kodgemisi.blog.<yourpackage>`.
-  ** Make sure your package starts with `com.kodgemisi.blog`.
-* Clone the new repo in your local file system and import the repository into your IDE.
-* Edit `pom.xml` file.
-  ** Edit all `TODO`s accordingly.
-  ** Change all `change-this` fields.
-* Don't add a configuration file other than `application.yml` unless it's specifically required by your blog post subject.
-  ** Use `dev` profile unless it's specifically required otherwise by your blog post subject.
-* Change everything in form of `<some text>` with your values.
-* Put all images and videos under images folder. Use them as follows: `image::images/some.gif[]`
-* You need to run `mvn clean compile` in order the blog post to be generated. It will be generated to `docs/index.html` file.
-* Remember that this blog post's default license is public domain.
-* *Remove this block*.
-
-.ASCIIDOCTOR related instructions
-
-* You can use https://asciidoctor.org/docs/asciidoc-syntax-quick-reference/[asciidoc syntax quick reference] to quickly learn about ASCIIDOC syntax.
-* While working in development, use `mvn asciidoctor:auto-refresh` to auto-generate `docs/index.html` file every time you make changes to `README.adoc`.
-* Idea can serve generated `docs/index.html` file via its own local web server.
-
-.Use IDEA's internal static file server to preview the `docs/index.html` file.
-image::https://i.ibb.co/m0YfMW3/image.png[]
-
-* By default table of contents shows 2 levels. You can edit it via `:toclevels: 4`. See details toc levels https://stackoverflow.com/a/31256911/878361[here].
-* You shouldn't really need it but just in case, if you need to put some css put them in `<style>` tag in `docinfo.html`
-
-****
+= Implementing Ruby's dig method in Java: A safe navigation for HashMap
+Destan Sarpkaya
 
 == Introduction
 
-< *Briefly* explain the goal of this blog post.>
+Suppose we have a JSON file like below and we want to convert to into a map (a hash in Ruby terminology.)
 
-< Put an image or preferably a gif/video to show how the finished work would seem or behave >
+```json
+{
+  "first": {
+    "second": {
+      "third": 1881
+    }
+  }
+}
+```
 
-== Getting started
+Ruby has a https://ruby-doc.org/core-2.6.5/Hash.html#method-i-dig[dig() method] which provides a _null-safe_ way to go deep in a nested map and Groovy has a https://groovy-lang.org/operators.html#_safe_navigation_operator[safe navigation] syntax to do the same.
 
-< Explain, in details, the steps to prepare the development environment (Database, cache, library configuration etc.) to successfully run the sample code in this repository. >
+Below 2 examples would return the value `1881`
 
-== <Write your blog post...>
+.Ruby usage
+```ruby
+map.dig('first', 'second', 'third') # returns 1881
+map.dig('first', 'X', 'third') # returns ""
+```
+
+.Groovy usage
+```groovy
+map.get('first')?.get('second')?.get('third') // returns 1881
+map.get('first')?.get('X')?.get('third') // returns "null"
+```
+
+Unfortunately, Java doesn't provide similar syntax. We would write something like below in Java:
+
+.Java 7 and below
+```java
+// it's just too verbose, let's skip it...
+```
+
+.Java 8+
+```java
+var em = Collections.emptyMap();
+map.getOrDefault("first", em).getOrDefault("second", em).getOrDefault("third", em)
+```
+
+== Ruby's `dig` method in Java
+
+We will implement an equivalent of Ruby's dig method in Java which will be used as follows:
+
+.Java usage
+```java
+dig(map, "first", "second", "third")) // retuns Optional[1881]
+dig(map, "first", "X", "third")) // returns Optional.empty
+```
+
+.Implementing the `dig` method in Java
+```java
+class MapUtils { <1>
+
+    public static <R> Optional<R> dig(Map<String, ?> map, String... keys) { <2>
+
+        if (map == null) {
+            throw new IllegalArgumentException("'map' cannot be null!");
+        }
+
+        if (keys == null || keys.length == 0) {
+            throw new IllegalArgumentException("You should provide at least one key!");
+        }
+
+        Map<String, ?> currentMap = map;
+
+        for (int i = 0; i < keys.length; ++i) {
+            final String key = keys[i];
+            final Object value = currentMap.get(key);
+            if (value instanceof Map) { <3>
+                currentMap = (Map<String, ?>) value; <4>
+            }
+            else {
+                if (i == keys.length - 1) { <5>
+                    final R retVal = (R) value; <6>
+                    return Optional.ofNullable(retVal);
+                }
+                return Optional.empty();
+            }
+        }
+
+        return Optional.empty();
+    }
+}
+```
+
+<1> You can put this method into any class and it has not to be a static method. This is just for convention.
+<2> `<R>` is a generic type. `dig` method has a parameterized return type so that developers can use it without casting.
+<3> No need for extra null checking because `instanceof` would return `false` for `null`s.
+<4> We need to assume that the `value` (the next object in the map) is of type `Map<String, ?>`. This is a safe assumption for us because if the `key` of the new map is not a string or the value of it is not a `Map` we won't have an error in next loop and simply return `Optional.empty()`.
+<5> If the `value` is not a `Map` and we have just used the last `key` then it means that we have got the final value.
+<6> We need to cast the return value. Here, the type safety is gone and successful execution is dependent on the developer's correct assumption of the result type.
+
+Remember the `sample.json` the last value is an integer `1881` not a string `"1881"`. Hence:
+
+```java
+Optional<String> result = dig(map, "first", "second", "third");
+String year = result.get();
+// Exception: java.lang.ClassCastException: class java.lang.Integer cannot be cast to class java.lang.String
+
+// Correct usage should be:
+Optional<Integer> result = dig(map, "first", "second", "third");
+Integer year = result.get();
+```
+
+== Trying the null safe navigation for Java HashMap
+
+. Clone the and import the project into your IDE
+. Run `DigMethodShowCase` class
+
+Or execute in command line
+
+. Build the project with `mvn clean package` command
+.. Run this command in project's root (where the `pom.xml` resides)
+. Execute it via:
+
+`java -jar target/ruby-dig-method-for-java-map-0.0.1-SNAPSHOT-jar-with-dependencies.jar`
+
+=== Seeing the original behavior
+
+There is also a Ruby file to demonstrate the original `dig` method in `src/main/resources/sample.rb`
+
+If you have Ruby installed you can run the file via
+
+```bash
+$ cd src/main/resources
+$ ruby sample.rb
+```
+
+It will parse `sample.json` into a map (Ruby folks call it hash) and use `dig` on it.
